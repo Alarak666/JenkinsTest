@@ -18,16 +18,14 @@ namespace MainApp
             {
                 using (var scope = Program.Container.BeginLifetimeScope())
                 {
-                    var formFactory = scope.Resolve<FormFactory>();
-
                     foreach (var registration in Program.Container.ComponentRegistry.Registrations)
                     {
                         foreach (var service in registration.Services)
                         {
                             if (service is TypedService typedService && typedService.ServiceType.IsSubclassOf(typeof(Form)))
                             {
-                                Form form = formFactory.CreateForm(typedService.ServiceType);
-                                AddFormToGroupBox(form);
+                                // Добавляем кнопку для каждой зарегистрированной формы
+                                AddButtonToGroupBox(typedService.ServiceType, typedService.ServiceType.Name);
                             }
                         }
                     }
@@ -39,13 +37,35 @@ namespace MainApp
             }
         }
 
-        private void AddFormToGroupBox(Form form)
+        private int buttonTop = 10; // Начальная позиция для первой кнопки
+
+        private void AddButtonToGroupBox(Type formType, string buttonText)
         {
-            form.TopLevel = false;
-            form.FormBorderStyle = FormBorderStyle.None;
-            form.Dock = DockStyle.Top;
-            form.Visible = true;
-            groupBox1.Controls.Add(form); // Предполагается, что ваш GroupBox называется groupBox1
+            // Создаем кнопку
+            Button button = new Button();
+            button.Text = buttonText;
+            button.Width = 200; // Задайте нужную ширину кнопки
+            button.Height = 40; // Задайте нужную высоту кнопки
+            button.Top = buttonTop; // Устанавливаем вертикальную позицию кнопки
+            button.Left = 10; // Устанавливаем горизонтальную позицию кнопки
+
+            // Подписываемся на событие Click
+            button.Click += (sender, e) =>
+            {
+                using (var scope = Program.Container.BeginLifetimeScope())
+                {
+                    var formFactory = scope.Resolve<FormFactory>();
+                    Form form = formFactory.CreateForm(formType);
+                    form.ShowDialog();
+                }
+            };
+
+            // Добавляем кнопку в GroupBox
+            groupBox1.Controls.Add(button);
+
+            // Обновляем позицию для следующей кнопки
+            buttonTop += button.Height + 10; // 10 - отступ между кнопками
         }
+
     }
 }
