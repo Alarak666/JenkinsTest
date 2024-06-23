@@ -16,7 +16,7 @@ public class FormFactory
         var constructors = formType.GetConstructors();
 
         // Найти конструктор с максимальным количеством параметров
-        var constructor = constructors.OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+        var constructor = constructors.MaxBy(c => c.GetParameters().Length);
 
         if (constructor == null)
         {

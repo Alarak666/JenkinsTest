@@ -41,15 +41,13 @@ namespace MainApp
 
         private void AddButtonToGroupBox(Type formType, string buttonText)
         {
-            // Создаем кнопку
             Button button = new Button();
             button.Text = buttonText;
-            button.Width = 200; // Задайте нужную ширину кнопки
-            button.Height = 40; // Задайте нужную высоту кнопки
-            button.Top = buttonTop; // Устанавливаем вертикальную позицию кнопки
-            button.Left = 10; // Устанавливаем горизонтальную позицию кнопки
+            button.Width = 200; 
+            button.Height = 40; 
+            button.Top = buttonTop; 
+            button.Left = 10; 
 
-            // Подписываемся на событие Click
             button.Click += (sender, e) =>
             {
                 using (var scope = Program.Container.BeginLifetimeScope())
@@ -60,11 +58,9 @@ namespace MainApp
                 }
             };
 
-            // Добавляем кнопку в GroupBox
             groupBox1.Controls.Add(button);
 
-            // Обновляем позицию для следующей кнопки
-            buttonTop += button.Height + 10; // 10 - отступ между кнопками
+            buttonTop += button.Height + 10;
         }
 
     }
