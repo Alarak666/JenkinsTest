@@ -1,12 +1,13 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Reflection;
+﻿using System.Reflection;
+using FZFarm.Core.Helpers;
+using Newtonsoft.Json.Linq;
 
-namespace MainApp
+namespace FZFarm.Core.Services.Loaders
 {
     public static class DependencyLoader
     {
         private static List<string> loadedAssemblies = new List<string>();
-
+       
         public static void LoadDependencies(string[] dependencyPaths)
         {
             // Загрузка всех DLL из указанных директорий
@@ -42,12 +43,6 @@ namespace MainApp
             };
 
             LoadSupportFiles(dependencyPaths);
-
-            // Проверка, загружена ли конкретная сборка
-            if (!loadedAssemblies.Any(a => a.Contains("System.Data.SqlClient.dll")))
-            {
-                Console.WriteLine("System.Data.SqlClient.dll не загружена.");
-            }
         }
 
         private static void LoadAssembliesFromPath(string path)

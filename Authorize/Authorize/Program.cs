@@ -1,47 +1,48 @@
-using Autofac;
-using FZFarm.Core.Constants.Enums;
-using FZFarm.Core.Exceptions;
-using FZFarm.Core.Helpers;
-using FZFarm.Core.Models.Exceptions;
-using FZFarm.Core.Services.Loaders;
-using FZFarm.MainApp.Forms;
+using FZFarm.Authorize.WinForm;
+using FZFarm.AuthorizeCore.Constants.Enums;
+using FZFarm.AuthorizeCore.Model;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
+using System.Reflection;
+using FZFarm.AuthorizeCore.CustomExceptions;
 
-namespace FZFarm.MainApp
+namespace FZFarm.Authorize
 {
-    public static class Program
+    internal static class Program
     {
-        public static IContainer Container { get; private set; }
-
         [STAThread]
         static void Main()
         {
+            ApplicationConfiguration.Initialize();
+
+            var assembly = Assembly.GetExecutingAssembly();
+            var builder = new ConfigurationBuilder();
+
+            Stream? stream = assembly.GetManifestResourceStream("Authorize.setting.json");
+            if (stream == null)
+            {
+                throw new InvalidOperationException("Could not find embedded resource");
+            }
+
+            builder.AddJsonStream(stream);
+
+            var configuration = builder.Build();
+
             var logger = new LoggerConfiguration()
-                .WriteTo.Console()
+                .ReadFrom.Configuration(configuration).WriteTo.Console()
                 .WriteTo.File(
-                    "Logs\\log-.txt",
+                    configuration["LogPath"],
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                     rollingInterval: RollingInterval.Day,
                     restrictedToMinimumLevel: LogEventLevel.Information)
                 .CreateLogger();
-
             Log.Logger = logger;
-
-            string basePath = @"D:\Git\AdminPortal\AdminPortal\bin\Debug\net8.0-windows";
-
-            // Печать списка загруженных сборок
-            DependencyLoader.PrintLoadedAssemblies();
-
-            // Настройка контейнера с указанием префиксов для фильтрации сборок
-            var containerConfig = new ContainerConfig(basePath,  "AdminPortal");
-            Container = containerConfig.Configure();
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
             Application.ThreadException += (sender, args) => GlobalExceptionHandler(args.Exception);
+
             AppDomain.CurrentDomain.UnhandledException += (sender, args) => GlobalExceptionHandler(args.ExceptionObject as Exception);
-            Application.Run(new MainForm());
+
+            Application.Run(new FormAuthorize());
         }
         public static void GlobalExceptionHandler(Exception e)
         {
@@ -68,6 +69,18 @@ namespace FZFarm.MainApp
                     {
                         Type = badRequestException.ErrorType,
                         Message = badRequestException.Message,
+                    };
+                case LoginFailedException loginFailedException:
+                    return new ErrorInfo
+                    {
+                        Type = loginFailedException.ErrorType,
+                        Message = loginFailedException.Message,
+                    };
+                case LivePasswordFailedException livePasswordFailedException:
+                    return new ErrorInfo
+                    {
+                        Type = livePasswordFailedException.ErrorType,
+                        Message = livePasswordFailedException.Message,
                     };
                 default:
                     return new ErrorInfo
